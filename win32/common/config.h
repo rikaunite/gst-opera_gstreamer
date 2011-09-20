@@ -182,7 +182,7 @@
 #undef HAVE_LIBSOCKET
 
 /* Define if libxml2 is available */
-#define HAVE_LIBXML2 1
+#undef HAVE_LIBXML2
 
 /* Define to 1 if you have the `localtime_r' function. */
 #undef HAVE_LOCALTIME_R

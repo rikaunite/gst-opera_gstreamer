@@ -19,6 +19,7 @@
  * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
  * Boston, MA 02111-1307, USA.
  */
+
 /**
  * SECTION:gstconfig
  * @short_description: Build configuration options
@@ -36,7 +37,7 @@
  *
  * If a subsystem is disabled in GStreamer, a value is defined in
  * &lt;gst/gst.h&gt;. You can check this if you do subsystem-specific stuff.
- * <example>
+ * <example id="example-gstconfig">
  * <title>Doing subsystem specific things</title>
  * <programlisting>
  * &hash;ifndef GST_DISABLE_GST_DEBUG
@@ -49,10 +50,9 @@
 #ifndef __GST_CONFIG_H__
 #define __GST_CONFIG_H__
 
-/*** trick gtk-doc into believing these symbols are defined (yes, it's ugly) */
+/* trick gtk-doc into believing these symbols are defined (yes, it's ugly) */
 
 #if 0
-#define GST_DISABLE_LOADSAVE_REGISTRY 1
 #define GST_DISABLE_GST_DEBUG 1
 #define GST_DISABLE_LOADSAVE 1
 #define GST_DISABLE_PARSE 1
@@ -60,39 +60,90 @@
 #define GST_DISABLE_ALLOC_TRACE 1
 #define GST_DISABLE_REGISTRY 1
 #define GST_DISABLE_PLUGIN 1
+#define GST_DISABLE_XML 1
+#define GST_DISABLE_LOADSAVE_REGISTRY 1
 #define GST_HAVE_GLIB_2_8 1
 #endif
 
 /***** default padding of structures *****/
 #define GST_PADDING		4
-#define GST_PADDING_INIT	{0}
+#define GST_PADDING_INIT	{ NULL }
 
 /***** padding for very extensible base classes *****/
-#define GST_PADDING_LARGE       20
-
+#define GST_PADDING_LARGE	20
 
 /***** disabling of subsystems *****/
 
-/* wether or not the debugging subsystem is enabled */
-/* #undef GST_DISABLE_GST_DEBUG */
+/**
+ * GST_DISABLE_GST_DEBUG:
+ *
+ * Configures the inclusion of the debugging subsystem
+ */
+#ifdef _DEBUG
+#undef GST_DISABLE_GST_DEBUG
+#else
+#define GST_DISABLE_GST_DEBUG 1
+#endif
 
-/* DOES NOT WORK */
-/* #undef GST_DISABLE_LOADSAVE */
+/**
+ * GST_DISABLE_LOADSAVE:
+ *
+ * Configures the inclusion of the plugin graph xml-serialisation
+ * (was used in 0.8 by gst-editor)
+ */
+#define GST_DISABLE_LOADSAVE 1
 
-/* DOES NOT WORK */
-/* #undef GST_DISABLE_PARSE */
+/**
+ * GST_DISABLE_PARSE:
+ *
+ * Configures the inclusion of the gst-lauch parser
+ */
+#define GST_DISABLE_PARSE 1
 
-/* DOES NOT WORK */
-/* #undef GST_DISABLE_TRACE */
+/**
+ * GST_DISABLE_TRACE:
+ *
+ * Configures the inclusion of a resource tracing facillity
+ * (seems to be unused)
+ */
+#ifdef _DEBUG
+#undef GST_DISABLE_TRACE
+#else
+#define GST_DISABLE_TRACE 1
+#endif
 
-/* DOES NOT WORK */
-/* #undef GST_DISABLE_ALLOC_TRACE */
+/**
+ * GST_DISABLE_ALLOC_TRACE:
+ *
+ * Configures the use of a memory tracer based on the resource tracer
+ * if TRACE is disabled, ALLOC_TRACE is disabled as well
+ */
+#ifdef _DEBUG
+#undef GST_DISABLE_ALLOC_TRACE
+#else
+#define GST_DISABLE_ALLOC_TRACE 1
+#endif
 
-/* DOES NOT WORK */
-/* #undef GST_DISABLE_REGISTRY */
+/**
+ * GST_DISABLE_REGISTRY:
+ *
+ * Configures the use of the plugin registry.
+ * If one disables this, required plugins need to be loaded and registered
+ * manually
+ */
+#undef GST_DISABLE_REGISTRY
 
-/* DOES NOT WORK */
-/* #undef GST_DISABLE_PLUGIN */
+/**
+ * GST_DISABLE_XML:
+ *
+ * Configures the use libxml2. This setting is derived from the settings of
+ * %GST_DISABLE_LOADSAVE and %GST_DISABLE_REGISTRY (in the xml registry case).
+ */
+#define GST_DISABLE_XML 1
+
+/* FIXME: test and document these! */
+/* Configures the use of external plugins */
+#undef GST_DISABLE_PLUGIN
 
 /* printf extension format */
 /**
@@ -102,7 +153,6 @@
  * This can only be used on types whose size is >= sizeof(gpointer).
  */
 #define GST_PTR_FORMAT "p"
-
 /**
  * GST_SEGMENT_FORMAT:
  *
@@ -118,18 +168,51 @@
  * header files so we know whether we can use G_GNUC_PRINTF or not */
 #undef GST_USING_PRINTF_EXTENSION
 
+/* GST_DISABLE_PRINTF_EXTENSION:
+ *
+ * Define this to debug your debug log messages and make gcc spew warnings
+ * if printf format string and arguments don't match up (this is usually
+ * not the case when libc and gcc are used because printf format warnings
+ * have to be disabled when the printf extension mechanism is in use).
+ *
+ * Note that using this option disables 'pretty logging' of GStreamer objects
+ * like caps, tags, structures, events, pads etc., so that only their address
+ * will be printed in the log.
+ *
+ * This define only disables use of the special registered printf format
+ * extensions in the code compiled with it defined. It does not stop
+ * GStreamer from registering these extensions in the first place if it
+ * was compiled against a libc that supports this.
+ *
+ * (not official API)
+ */
+/* If GLib is not using the system printf, we can't use the registered
+ * extensions because the GLib-internal printf won't know how to parse them */
+#if defined(GST_DISABLE_PRINTF_EXTENSION) || !defined(GLIB_USING_SYSTEM_PRINTF)
+  #undef GST_PTR_FORMAT
+  #define GST_PTR_FORMAT "p"
+  #undef GST_SEGMENT_FORMAT
+  #define GST_SEGMENT_FORMAT "p"
+  #undef GST_USING_PRINTF_EXTENSION
+#endif
+
 /* whether or not the CPU supports unaligned access */
 #define GST_HAVE_UNALIGNED_ACCESS 1
 
-/* whether or not we are using glib 2.8 api, e.g. atomic gobject
-   refcounting */
+/* FIXME: 0.11 (remove)
+ * whether or not we are using glib 2.8 api, e.g. atomic gobject
+ * refcounting */
 #define GST_HAVE_GLIB_2_8 1
 
 /***** Deal with XML stuff, we have to handle both loadsave and registry *****/
-
-#if (! (defined(GST_DISABLE_LOADSAVE) && defined(GST_DISABLE_REGISTRY)) )
+/* FIXME: move include to where we need it */
+/*#if (! (defined(GST_DISABLE_LOADSAVE) && defined(GST_DISABLE_REGISTRY)) )*/
+#ifndef GST_DISABLE_XML
+#ifndef GST_DISABLE_DEPRECATED
 # include <libxml/parser.h>
+#endif
 #else
+  /* FIXME: 0.11 (replace by GST_DISABLE_XML) */
 # define GST_DISABLE_LOADSAVE_REGISTRY
 #endif
 
@@ -149,14 +232,18 @@
  * On Windows, this exports the plugin definition from the DLL.
  * On other platforms, this gets defined as a no-op.
  */
-#if defined(WIN32) && (!defined(__MINGW32__))
+#ifdef _MSC_VER
 #define GST_PLUGIN_EXPORT __declspec(dllexport) extern
+#ifdef GST_STATIC_COMPILATION
+#define GST_EXPORT extern
+#else
 #ifdef GST_EXPORTS
 #define GST_EXPORT __declspec(dllexport) extern
 #else
 #define GST_EXPORT __declspec(dllimport) extern
 #endif
-#else /* not WIN32 */
+#endif
+#else /* not _MSC_VER */
 #define GST_PLUGIN_EXPORT
 #define GST_EXPORT extern
 #endif

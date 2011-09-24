@@ -41,6 +41,10 @@
 
 #include <sys/types.h>
 
+#ifdef OPERA_MINIMAL_GST
+#define G_OS_WIN32
+#endif /* OPERA_MINIMAL_GST */
+
 #ifdef G_OS_WIN32
 #include <io.h>                 /* lseek, open, close, read */
 #undef lseek
